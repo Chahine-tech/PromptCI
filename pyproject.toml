@@ -1,0 +1,50 @@
+[project]
+name = "promptci"
+version = "0.1.0"
+description = "pytest for LLM prompts — tests, regressions, CI."
+readme = "README.md"
+authors = [
+    { name = "Chahine-tech", email = "chahine.benlahcen@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "typer>=0.12",
+    "httpx>=0.27",
+    "pydantic-settings>=2.4",
+    "rich>=13.7",
+    "pytest>=8.0",
+]
+
+[project.scripts]
+promptci = "promptci.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+[project.entry-points.pytest11]
+promptci = "promptci.plugin"
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=0.23",
+    "ruff>=0.6",
+    "ty>=0.0.1a1",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "ANN", "ASYNC", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN"]
+"examples/**" = ["ANN"]
+
+[tool.ty.environment]
+python-version = "3.13"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
