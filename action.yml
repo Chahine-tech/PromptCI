@@ -56,16 +56,18 @@ runs:
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
+        UV_PYTHON: ${{ inputs.python-version }}
       run: |
-        # If the action is used with `uses: ./` from the PromptCI repo itself
-        # (dogfooding or self-test), install from source. Otherwise install from PyPI.
+        # Install PromptCI as a uv tool so it's isolated and on PATH.
+        # uv will auto-download the requested Python if it's not present.
         if [ -f "$ACTION_PATH/pyproject.toml" ] && grep -q 'name = "promptci"' "$ACTION_PATH/pyproject.toml"; then
           echo "Installing PromptCI from source at $ACTION_PATH"
-          uv pip install --system "$ACTION_PATH"
+          uv tool install --python "$UV_PYTHON" "$ACTION_PATH"
         else
           echo "Installing PromptCI from PyPI"
-          uv pip install --system promptci
+          uv tool install --python "$UV_PYTHON" promptci
         fi
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
     - name: Run on base ref (for diff)
       if: ${{ inputs.base-ref != '' && github.event_name == 'pull_request' }}
@@ -111,7 +113,7 @@ runs:
       env:
         SNAP_DIR: ${{ steps.run.outputs.snap_dir }}
       run: |
-        python - <<'PY' >> "$GITHUB_OUTPUT"
+        uv run --python ${{ inputs.python-version }} --no-project python - <<'PY' >> "$GITHUB_OUTPUT"
         import json, os
         from pathlib import Path
 
