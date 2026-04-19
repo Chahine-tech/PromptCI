@@ -6,7 +6,7 @@ from typing import TypeVar
 
 F = TypeVar("F", bound=Callable[..., object])
 
-PROMPT_TEST_ATTR = "__promptci_meta__"
+PROMPT_TEST_ATTR = "__pytest_prompts_meta__"
 
 
 @dataclass(slots=True, frozen=True)
@@ -21,7 +21,7 @@ def prompt_test(
     timeout: float | None = None,
     max_tokens: int | None = None,
 ) -> Callable[[F], F]:
-    """Mark a pytest test as a PromptCI prompt test.
+    """Mark a pytest test as a pytest-prompts prompt test.
 
     The test must declare a `runner` parameter, which will be injected
     by the pytest plugin with a Runner configured for this test.

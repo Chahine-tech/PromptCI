@@ -5,16 +5,16 @@ from pathlib import Path
 
 import pytest
 
-from promptci.config import settings
-from promptci.decorator import get_meta
-from promptci.runner import Runner, RunResult
-from promptci.snapshot import Snapshot, SnapshotStore
+from pytest_prompts.config import settings
+from pytest_prompts.decorator import get_meta
+from pytest_prompts.runner import Runner, RunResult
+from pytest_prompts.snapshot import Snapshot, SnapshotStore
 
 _LAST_RESULT_KEY: pytest.StashKey[RunResult] = pytest.StashKey()
 
 
 class _RecordingRunner:
-    """Wraps a Runner and stores the last RunResult on the pytest item."""
+    """Wrap a Runner and store the last RunResult on the pytest item."""
 
     def __init__(self, inner: Runner, item: pytest.Item) -> None:
         self._inner = inner
@@ -75,7 +75,7 @@ def pytest_runtest_makereport(
     )
 
     root = (
-        item.config.getoption("--promptci-snapshot-dir", default=None)
+        item.config.getoption("--pytest-prompts-snapshot-dir", default=None)
         or settings.snapshot_dir
     )
     SnapshotStore(root).write(snapshot)
@@ -84,8 +84,8 @@ def pytest_runtest_makereport(
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
-        "--promptci-snapshot-dir",
+        "--pytest-prompts-snapshot-dir",
         action="store",
         default=None,
-        help="Directory to write PromptCI snapshots (overrides settings).",
+        help="Directory to write pytest-prompts snapshots (overrides settings).",
     )

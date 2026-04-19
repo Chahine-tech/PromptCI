@@ -6,7 +6,7 @@ on:
     branches: [main]
     paths:
       - "examples/**"
-      - "src/promptci/**"
+      - "src/pytest_prompts/**"
       - "action.yml"
       - ".github/workflows/example.yml"
 
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run PromptCI on examples/
+      - name: Run pytest-prompts on examples/
         uses: ./
         with:
           path: examples/

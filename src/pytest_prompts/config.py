@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     default_model: str = "claude-sonnet-4-6"
     default_timeout: float = 30.0
     default_max_tokens: int = 1024
-    snapshot_dir: str = ".promptci/snapshots"
+    snapshot_dir: str = ".pytest-prompts/snapshots"
 
 
 settings = Settings()

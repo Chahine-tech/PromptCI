@@ -2,9 +2,9 @@
 
 Run with:
     export ANTHROPIC_API_KEY=sk-ant-...
-    uv run promptci run examples/
+    uv run pytest-prompts run examples/
 """
-from promptci import prompt_test
+from pytest_prompts import prompt_test
 
 
 @prompt_test()

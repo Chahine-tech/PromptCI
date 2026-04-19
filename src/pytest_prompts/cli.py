@@ -9,8 +9,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from promptci.config import settings
-from promptci.snapshot import Snapshot, SnapshotStore
+from pytest_prompts.config import settings
+from pytest_prompts.snapshot import Snapshot, SnapshotStore
 
 app = typer.Typer(
     help="pytest for LLM prompts — tests, regressions, CI.",
@@ -38,7 +38,7 @@ def run(
         "-m",
         "pytest",
         path,
-        f"--promptci-snapshot-dir={snapshot_dir}",
+        f"--pytest-prompts-snapshot-dir={snapshot_dir}",
     ]
     if verbose:
         args.append("-v")
@@ -90,7 +90,7 @@ def _clear_dir(path: Path) -> None:
 
 def _print_summary(snapshots: list[Snapshot]) -> None:
     if not snapshots:
-        console.print("\n[yellow]No PromptCI snapshots recorded.[/yellow]")
+        console.print("\n[yellow]No pytest-prompts snapshots recorded.[/yellow]")
         return
 
     passed = sum(1 for s in snapshots if s.passed)
@@ -98,7 +98,7 @@ def _print_summary(snapshots: list[Snapshot]) -> None:
     total_tokens = sum(s.input_tokens + s.output_tokens for s in snapshots)
     total_cost = sum(s.cost_usd for s in snapshots)
 
-    table = Table(title="PromptCI results", show_lines=False)
+    table = Table(title="pytest-prompts results", show_lines=False)
     table.add_column("Test", style="cyan", overflow="fold")
     table.add_column("Model", style="magenta")
     table.add_column("Tokens", justify="right")
@@ -160,7 +160,7 @@ def _print_diff(
     head: dict[str, Snapshot],
     regressions: list[tuple[str, str]],
 ) -> None:
-    table = Table(title="PromptCI diff", show_lines=False)
+    table = Table(title="pytest-prompts diff", show_lines=False)
     table.add_column("Test", style="cyan", overflow="fold")
     table.add_column("Base", justify="right")
     table.add_column("Head", justify="right")

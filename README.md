@@ -1,9 +1,9 @@
-# PromptCI
+# pytest-prompts
 
 > **pytest for LLM prompts.** Write tests, detect regressions, run in CI.
 
 ```python
-from promptci import prompt_test
+from pytest_prompts import prompt_test
 
 @prompt_test()
 def test_qa_knows_capital_of_france(runner):
@@ -16,8 +16,8 @@ def test_qa_knows_capital_of_france(runner):
 ```
 
 ```bash
-$ promptci run
-                                PromptCI results
+$ pytest-prompts run
+                                pytest-prompts results
  Test                                           Model             Tokens  Latency  Status
  examples/test_prompts.py::test_summary...      claude-sonnet-4-6    174    1.2s    PASS
  examples/test_prompts.py::test_qa_knows...     claude-sonnet-4-6     48    0.9s    PASS
@@ -26,14 +26,14 @@ $ promptci run
 3 passed, 0 failed — 274 tokens total — $0.0012
 ```
 
-Change a prompt → rerun → `promptci diff` shows what regressed.
+Change a prompt → rerun → `pytest-prompts diff` shows what regressed.
 
 ---
 
 ## Install
 
 ```bash
-uv add promptci
+uv add pytest-prompts
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
@@ -43,7 +43,7 @@ Any `pytest` file. Decorate with `@prompt_test()`, declare a `runner` fixture, a
 
 ```python
 # tests/test_summarizer.py
-from promptci import prompt_test
+from pytest_prompts import prompt_test
 
 @prompt_test(model="claude-sonnet-4-6")
 def test_summary_is_concise(runner):
@@ -59,25 +59,25 @@ def test_summary_is_concise(runner):
 
 ## Detect regressions
 
-Every run writes snapshots to `.promptci/snapshots/`.
+Every run writes snapshots to `.pytest-prompts/snapshots/`.
 
 ```bash
 # Capture baseline on main
 git checkout main
-promptci run --snapshot-dir .promptci/base
+pytest-prompts run --snapshot-dir .pytest-prompts/base
 
 # Run on your branch
 git checkout feature/new-prompt
-promptci run --snapshot-dir .promptci/head
+pytest-prompts run --snapshot-dir .pytest-prompts/head
 
 # Compare
-promptci diff .promptci/base .promptci/head
+pytest-prompts diff .pytest-prompts/base .pytest-prompts/head
 ```
 
 Output:
 
 ```
-PromptCI diff
+pytest-prompts diff
  Test                                  Base          Head          Status
  test_summary_is_concise               ✓ 342t 1.2s   ✓ 891t 3.1s   REGRESSION
  test_qa_knows_capital_of_france       ✓ 48t 0.9s    ✓ 48t 0.8s    ok
@@ -94,7 +94,7 @@ Exit code `1` on any regression. Wire it into CI and you're done.
 - uses: actions/checkout@v4
   with:
     fetch-depth: 0  # required for base-ref diff mode
-- uses: chahine-tech/promptci@v0.1
+- uses: chahine-tech/pytest-prompts@v0.1
   with:
     path: tests/prompts
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -121,8 +121,8 @@ Outputs: `passed`, `failed`, `total-tokens`, `total-cost-usd`, `regressions`.
 
 - `@prompt_test` decorator with `pytest` integration
 - `Runner` for the Anthropic API (Claude Sonnet 4.6 default)
-- `promptci run` — run tests, summarize tokens/latency/cost
-- `promptci diff` — compare two snapshot dirs, flag regressions
+- `pytest-prompts run` — run tests, summarize tokens/latency/cost
+- `pytest-prompts diff` — compare two snapshot dirs, flag regressions
 
 **Not here yet:** OpenAI/Gemini adapters, static prompt analysis, LLM-as-judge, HTML reports. If you want them, open an issue — priorities come from usage, not from a roadmap.
 

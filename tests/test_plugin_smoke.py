@@ -16,9 +16,9 @@ pytest_plugins = ["pytester"]
 def test_fixture_injects_runner_and_writes_snapshot(pytester: pytest.Pytester) -> None:
     pytester.makepyfile(
         test_inner="""
-        from promptci import prompt_test
-        from promptci.plugin import _RecordingRunner
-        from promptci.runner import MockRunner
+        from pytest_prompts import prompt_test
+        from pytest_prompts.plugin import _RecordingRunner
+        from pytest_prompts.runner import MockRunner
 
         @prompt_test(model="mock-model")
         def test_uses_runner(runner, monkeypatch):
@@ -30,7 +30,7 @@ def test_fixture_injects_runner_and_writes_snapshot(pytester: pytest.Pytester) -
         """
     )
     snap_dir = pytester.path / "snaps"
-    result = pytester.runpytest("-q", f"--promptci-snapshot-dir={snap_dir}")
+    result = pytester.runpytest("-q", f"--pytest-prompts-snapshot-dir={snap_dir}")
     result.assert_outcomes(passed=1)
 
     snapshots = list(snap_dir.glob("*.json"))
@@ -46,8 +46,8 @@ def test_fixture_injects_runner_and_writes_snapshot(pytester: pytest.Pytester) -
 def test_no_snapshot_when_not_decorated(pytester: pytest.Pytester) -> None:
     pytester.makepyfile(
         test_inner="""
-        from promptci.plugin import _RecordingRunner
-        from promptci.runner import MockRunner
+        from pytest_prompts.plugin import _RecordingRunner
+        from pytest_prompts.runner import MockRunner
 
         def test_no_decorator(runner):
             runner._inner = MockRunner()
@@ -55,7 +55,7 @@ def test_no_snapshot_when_not_decorated(pytester: pytest.Pytester) -> None:
         """
     )
     snap_dir = pytester.path / "snaps"
-    result = pytester.runpytest("-q", f"--promptci-snapshot-dir={snap_dir}")
+    result = pytester.runpytest("-q", f"--pytest-prompts-snapshot-dir={snap_dir}")
     result.assert_outcomes(passed=1)
 
     assert not snap_dir.exists() or list(snap_dir.glob("*.json")) == []
@@ -64,8 +64,8 @@ def test_no_snapshot_when_not_decorated(pytester: pytest.Pytester) -> None:
 def test_failed_test_snapshot_captures_error(pytester: pytest.Pytester) -> None:
     pytester.makepyfile(
         test_inner="""
-        from promptci import prompt_test
-        from promptci.runner import MockRunner
+        from pytest_prompts import prompt_test
+        from pytest_prompts.runner import MockRunner
 
         @prompt_test()
         def test_will_fail(runner):
@@ -75,7 +75,7 @@ def test_failed_test_snapshot_captures_error(pytester: pytest.Pytester) -> None:
         """
     )
     snap_dir = pytester.path / "snaps"
-    result = pytester.runpytest("-q", f"--promptci-snapshot-dir={snap_dir}")
+    result = pytester.runpytest("-q", f"--pytest-prompts-snapshot-dir={snap_dir}")
     result.assert_outcomes(failed=1)
 
     snapshots = list(Path(snap_dir).glob("*.json"))

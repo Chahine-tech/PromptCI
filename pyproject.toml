@@ -1,12 +1,25 @@
 [project]
-name = "promptci"
+name = "pytest-prompts"
 version = "0.1.0"
 description = "pytest for LLM prompts — tests, regressions, CI."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Chahine-tech", email = "chahine.benlahcen@gmail.com" }
 ]
 requires-python = ">=3.13"
+keywords = ["llm", "pytest", "prompt-engineering", "ci", "anthropic", "claude", "testing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Framework :: Pytest",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "typer>=0.12",
     "httpx>=0.27",
@@ -15,15 +28,20 @@ dependencies = [
     "pytest>=8.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Chahine-tech/pytest-prompts"
+Repository = "https://github.com/Chahine-tech/pytest-prompts"
+Issues = "https://github.com/Chahine-tech/pytest-prompts/issues"
+
 [project.scripts]
-promptci = "promptci.cli:app"
+pytest-prompts = "pytest_prompts.cli:app"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]
 build-backend = "uv_build"
 
 [project.entry-points.pytest11]
-promptci = "promptci.plugin"
+pytest_prompts = "pytest_prompts.plugin"
 
 [dependency-groups]
 dev = [

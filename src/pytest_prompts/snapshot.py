@@ -6,7 +6,7 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from promptci.runner import RunResult
+from pytest_prompts.runner import RunResult
 
 SAFE_ID = re.compile(r"[^a-zA-Z0-9_.-]")
 

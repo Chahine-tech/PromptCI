@@ -8,7 +8,7 @@ from string import Template
 
 import httpx
 
-from promptci.config import settings
+from pytest_prompts.config import settings
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
@@ -137,7 +137,7 @@ class Runner:
 
 @dataclass(slots=True)
 class MockRunner:
-    """Deterministic runner for PromptCI's own tests."""
+    """Deterministic runner for pytest-prompts' own tests."""
 
     canned_output: str = "ok"
     canned_input_tokens: int = 10
