@@ -83,3 +83,61 @@ def test_failed_test_snapshot_captures_error(pytester: pytest.Pytester) -> None:
     data = json.loads(snapshots[0].read_text())
     assert data["passed"] is False
     assert data["error"] is not None
+
+
+def test_judge_verdict_recorded_in_snapshot(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        test_inner="""
+        from pytest_prompts import prompt_test
+        from pytest_prompts.runner import MockRunner
+
+        @prompt_test()
+        def test_with_judge(runner):
+            runner._inner = MockRunner(
+                canned_output="Paris is the capital of France", canned_verdict=True
+            )
+            result = runner.run(prompt="What is the capital of France?")
+            verdict = runner.judge(result, "The answer mentions Paris")
+            assert verdict.verdict is True
+        """
+    )
+    snap_dir = pytester.path / "snaps"
+    result = pytester.runpytest("-q", f"--pytest-prompts-snapshot-dir={snap_dir}")
+    result.assert_outcomes(passed=1)
+
+    snapshots = list(snap_dir.glob("*.json"))
+    assert len(snapshots) == 1
+    data = json.loads(snapshots[0].read_text())
+    assert data["judge_calls"] == [
+        {
+            "verdict": True,
+            "reasoning": "mock judge",
+            "criterion": "The answer mentions Paris",
+            "input_tokens": 5,
+            "output_tokens": 3,
+            "cost_usd": 0.0,
+        }
+    ]
+
+
+def test_judge_failure_fails_test(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        test_inner="""
+        from pytest_prompts import prompt_test
+        from pytest_prompts.runner import MockRunner
+
+        @prompt_test()
+        def test_judge_says_no(runner):
+            runner._inner = MockRunner(canned_output="I don't know", canned_verdict=False)
+            result = runner.run(prompt="x")
+            verdict = runner.judge(result, "The answer mentions Paris")
+            assert verdict.verdict, verdict.reasoning
+        """
+    )
+    snap_dir = pytester.path / "snaps"
+    result = pytester.runpytest("-q", f"--pytest-prompts-snapshot-dir={snap_dir}")
+    result.assert_outcomes(failed=1)
+
+    data = json.loads(list(snap_dir.glob("*.json"))[0].read_text())
+    assert data["passed"] is False
+    assert data["judge_calls"][0]["verdict"] is False

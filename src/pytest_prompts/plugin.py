@@ -7,10 +7,11 @@ import pytest
 
 from pytest_prompts.config import settings
 from pytest_prompts.decorator import get_meta
-from pytest_prompts.runner import Runner, RunResult
+from pytest_prompts.runner import JudgeResult, Runner, RunResult
 from pytest_prompts.snapshot import Snapshot, SnapshotStore
 
 _LAST_RESULT_KEY: pytest.StashKey[RunResult] = pytest.StashKey()
+_JUDGE_CALLS_KEY: pytest.StashKey[list[JudgeResult]] = pytest.StashKey()
 
 
 class _RecordingRunner:
@@ -32,6 +33,15 @@ class _RecordingRunner:
         )
         self._item.stash[_LAST_RESULT_KEY] = result
         return result
+
+    def judge(self, result: RunResult, criterion: str) -> JudgeResult:
+        judge_result = self._inner.judge(result, criterion)
+        calls = self._item.stash.get(_JUDGE_CALLS_KEY, None)
+        if calls is None:
+            calls = []
+            self._item.stash[_JUDGE_CALLS_KEY] = calls
+        calls.append(judge_result)
+        return judge_result
 
 
 @pytest.fixture
@@ -67,11 +77,13 @@ def pytest_runtest_makereport(
         return report
 
     error = None if report.passed else (report.longreprtext or "failed")
+    judge_calls = item.stash.get(_JUDGE_CALLS_KEY, None) or []
     snapshot = Snapshot.from_result(
         test_id=item.nodeid,
         passed=report.passed,
         result=result,
         error=error,
+        judge_calls=judge_calls,
     )
 
     root = (

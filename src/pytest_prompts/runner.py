@@ -35,6 +35,16 @@ class RunResult:
         return self.input_tokens + self.output_tokens
 
 
+@dataclass(slots=True)
+class JudgeResult:
+    verdict: bool
+    reasoning: str
+    criterion: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+
+
 def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     price = PRICE_PER_MTOK.get(model)
     if price is None:
@@ -44,6 +54,27 @@ def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 
 def _hash_prompt(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+
+
+_JUDGE_SYSTEM = (
+    "You are an impartial evaluator. Given an LLM output and a criterion, "
+    "decide whether the output satisfies the criterion. "
+    "Reply with exactly two lines:\n"
+    "VERDICT: YES or NO\n"
+    "REASON: one sentence explaining your decision."
+)
+
+
+def _parse_judge_response(text: str) -> tuple[bool, str]:
+    verdict = False
+    reasoning = text.strip()
+    for line in text.splitlines():
+        line = line.strip()
+        if line.upper().startswith("VERDICT:"):
+            verdict = "YES" in line.upper()
+        elif line.upper().startswith("REASON:"):
+            reasoning = line.split(":", 1)[-1].strip()
+    return verdict, reasoning
 
 
 class Runner:
@@ -120,6 +151,53 @@ class Runner:
             cost_usd=_estimate_cost(self.model, input_tokens, output_tokens),
         )
 
+    def judge(self, result: RunResult, criterion: str) -> JudgeResult:
+        if not self.api_key:
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY not set. Export it or add it to a .env file."
+            )
+
+        user_content = f"Output:\n{result.output}\n\nCriterion:\n{criterion}"
+        payload: dict[str, object] = {
+            "model": self.model,
+            "max_tokens": 256,
+            "system": _JUDGE_SYSTEM,
+            "messages": [{"role": "user", "content": user_content}],
+        }
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": ANTHROPIC_VERSION,
+            "content-type": "application/json",
+        }
+
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.post(ANTHROPIC_URL, json=payload, headers=headers)
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Anthropic API {response.status_code}: {response.text[:500]}"
+            )
+
+        data = response.json()
+        text = "".join(
+            block.get("text", "")
+            for block in data.get("content", [])
+            if block.get("type") == "text"
+        )
+        usage = data.get("usage", {})
+        input_tokens = int(usage.get("input_tokens", 0))
+        output_tokens = int(usage.get("output_tokens", 0))
+        verdict, reasoning = _parse_judge_response(text)
+
+        return JudgeResult(
+            verdict=verdict,
+            reasoning=reasoning,
+            criterion=criterion,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=_estimate_cost(self.model, input_tokens, output_tokens),
+        )
+
     @staticmethod
     def _load_prompt(
         prompt: str | Path, variables: dict[str, str] | None
@@ -143,8 +221,11 @@ class MockRunner:
     canned_input_tokens: int = 10
     canned_output_tokens: int = 5
     canned_latency_ms: int = 1
+    canned_verdict: bool = True
+    canned_reasoning: str = "mock judge"
     model: str = "mock"
     calls: list[dict[str, object]] = field(default_factory=list)
+    judge_calls: list[dict[str, object]] = field(default_factory=list)
 
     def run(
         self,
@@ -164,5 +245,16 @@ class MockRunner:
             latency_ms=self.canned_latency_ms,
             model=self.model,
             prompt_hash=_hash_prompt(prompt_text),
+            cost_usd=0.0,
+        )
+
+    def judge(self, result: RunResult, criterion: str) -> JudgeResult:
+        self.judge_calls.append({"output": result.output, "criterion": criterion})
+        return JudgeResult(
+            verdict=self.canned_verdict,
+            reasoning=self.canned_reasoning,
+            criterion=criterion,
+            input_tokens=5,
+            output_tokens=3,
             cost_usd=0.0,
         )

@@ -57,6 +57,22 @@ def test_summary_is_concise(runner):
 
 `result` exposes `output`, `input_tokens`, `output_tokens`, `tokens_used`, `latency_ms`, `model`, `cost_usd`.
 
+## LLM-as-judge
+
+String matching is fragile. Use `runner.judge()` to evaluate outputs semantically:
+
+```python
+from pytest_prompts import prompt_test
+
+@prompt_test()
+def test_qa_knows_capital_of_france(runner):
+    result = runner.run(prompt="prompts/qa.txt", input="What is the capital of France?")
+    verdict = runner.judge(result, "The answer correctly identifies Paris as the capital of France")
+    assert verdict.verdict, verdict.reasoning
+```
+
+`verdict` exposes `verdict` (bool), `reasoning` (one sentence), `criterion`, `input_tokens`, `output_tokens`, `cost_usd`. Judge calls are recorded in snapshots alongside the run result.
+
 ## Detect regressions
 
 Every run writes snapshots to `.pytest-prompts/snapshots/`.
@@ -121,6 +137,7 @@ Outputs: `passed`, `failed`, `total-tokens`, `total-cost-usd`, `regressions`.
 
 - `@prompt_test` decorator with `pytest` integration
 - `Runner` for the Anthropic API (Claude Sonnet 4.6 default)
+- `runner.judge()` — LLM-as-judge for semantic assertions
 - `pytest-prompts run` — run tests, summarize tokens/latency/cost
 - `pytest-prompts diff` — compare two snapshot dirs, flag regressions
 

@@ -27,7 +27,8 @@ def test_qa_knows_capital_of_france(runner):
         prompt="examples/prompts/qa.txt",
         input="What is the capital of France?",
     )
-    assert "Paris" in result.output
+    verdict = runner.judge(result, "The answer correctly identifies Paris as the capital of France")
+    assert verdict.verdict, verdict.reasoning
 
 
 @prompt_test()

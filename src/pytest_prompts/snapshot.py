@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 import re
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from pytest_prompts.runner import RunResult
+from pytest_prompts.runner import JudgeResult, RunResult
 
 SAFE_ID = re.compile(r"[^a-zA-Z0-9_.-]")
 
@@ -24,10 +24,16 @@ class Snapshot:
     cost_usd: float
     timestamp: float
     error: str | None = None
+    judge_calls: list[dict[str, object]] = field(default_factory=list)
 
     @classmethod
     def from_result(
-        cls, test_id: str, passed: bool, result: RunResult, error: str | None = None
+        cls,
+        test_id: str,
+        passed: bool,
+        result: RunResult,
+        error: str | None = None,
+        judge_calls: list[JudgeResult] | None = None,
     ) -> Snapshot:
         return cls(
             test_id=test_id,
@@ -41,6 +47,7 @@ class Snapshot:
             cost_usd=result.cost_usd,
             timestamp=time.time(),
             error=error,
+            judge_calls=[asdict(j) for j in (judge_calls or [])],
         )
 
     def to_json(self) -> str:
