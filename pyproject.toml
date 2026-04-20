@@ -1,6 +1,6 @@
 [project]
 name = "pytest-prompts"
-version = "0.1.0"
+version = "0.1.2"
 description = "pytest for LLM prompts — tests, regressions, CI."
 readme = "README.md"
 license = "MIT"
